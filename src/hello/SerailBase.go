@@ -30,9 +30,12 @@ var parityVal string
 //毫秒数
 var noMilliseconds string
 
+//全局变量
+var tcpConnMap map[net.Conn]struct{}
+
 func init() {
 	var n int
-	n=len(os.Args)
+	n = len(os.Args)
 	println("There are several parameters:" + strconv.Itoa(n))
 	if n == 1 {
 		//第一个参数是parameters1:C:\Users\85077\AppData\Local\Temp\___18838go_build_awesomeProject1_src_hello.exe
@@ -131,6 +134,11 @@ func main() {
 		fmt.Println("Listen() failed, err: ", err)
 		return
 	}
+	tcpConnMap = map[net.Conn]struct{}{}
+	numMilli, _ := strconv.Atoi(noMilliseconds)
+
+	go SerialBase(serialPortVal, baudInt, parityBit, stopBit, numMilli)
+
 	var tcpConn net.Conn
 	go func() {
 		for {
@@ -138,12 +146,14 @@ func main() {
 			if err != nil {
 				fmt.Println("Accept() failed, err: ", err)
 				continue
+			} else {
+				tcpConnMap[tcpConn] = struct{}{}
 			}
-			numMilli, _ := strconv.Atoi(noMilliseconds)
-			err = SerialBase(tcpConn, serialPortVal, baudInt, parityBit, stopBit, numMilli)
-			if err != nil {
-				continue
-			}
+
+			//err = SerialBase(tcpConn, serialPortVal, baudInt, parityBit, stopBit, numMilli)
+			//if err != nil {
+			//	continue
+			//}
 		}
 	}()
 
@@ -153,7 +163,7 @@ func main() {
 
 }
 
-func SerialBase(tcpConn net.Conn, serialPort string, baudVal int, parityVal serial.Parity, stopBitsVal serial.StopBits, noMillisecondsV int) error {
+func SerialBase(serialPort string, baudVal int, parityVal serial.Parity, stopBitsVal serial.StopBits, noMillisecondsV int) error {
 	defer func() {
 		// recover内置函数，可以捕获到异常
 		err := recover()
@@ -189,15 +199,28 @@ func SerialBase(tcpConn net.Conn, serialPort string, baudVal int, parityVal seri
 
 	//启动一个协程循环发送
 	go func() {
+		defer func() {
+			// recover内置函数，可以捕获到异常
+			err := recover()
+			if err != nil {
+				fmt.Println("err:", err)
+			}
+		}()
 		for {
 			var n int
 			buf := make([]byte, 1024)
-			n, errTcp = tcpConn.Read(buf)
-			if errTcp != nil {
-				tcpConn.Close()
-				conn.Close()
-				break
+			if tcpConnMap != nil {
+				for tcpConn, _ := range tcpConnMap {
+					n, errTcp = tcpConn.Read(buf)
+					if errTcp != nil {
+						tcpConn.Close()
+						delete(tcpConnMap, tcpConn)
+						//conn.Close()
+						continue
+					}
+				}
 			}
+
 			revData := buf[:n]
 			_, err := conn.Write(revData)
 			if err != nil {
@@ -212,10 +235,10 @@ func SerialBase(tcpConn net.Conn, serialPort string, baudVal int, parityVal seri
 
 	//保持数据持续接收
 	for {
-		if errTcp != nil {
-			conn.Close()
-			return errTcp
-		}
+		//if errTcp != nil {
+		//	conn.Close()
+		//	return errTcp
+		//}
 		buf := make([]byte, 1024)
 		lens, err := conn.Read(buf)
 		time.Sleep(time.Duration(noMillisecondsV) * time.Millisecond)
@@ -227,11 +250,16 @@ func SerialBase(tcpConn net.Conn, serialPort string, baudVal int, parityVal seri
 		revData := buf[:lens]
 		if len(revData) > 0 {
 			log.Printf("Rx:%X \n", revData)
-			_, errTcp = tcpConn.Write(revData)
-			if errTcp != nil {
-				//conn.Close()
-				tcpConn.Close()
-				return errTcp
+			if tcpConnMap != nil {
+				for tcpConn, _ := range tcpConnMap {
+					_, errTcp = tcpConn.Write(revData)
+					if errTcp != nil {
+						//conn.Close()
+						tcpConn.Close()
+						delete(tcpConnMap, tcpConn)
+						//return errTcp
+					}
+				}
 			}
 		}
 	}
