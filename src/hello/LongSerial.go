@@ -256,7 +256,7 @@ func SerialBase(serialPort string, baudVal int, parityVal serial.Parity, dataBit
 						serialConn, err = serial.OpenPort(ser)
 						continue
 					}
-					log.Printf("Tx:%X \n", revData)
+					log.Printf("远程IP和端口:"+tcpConn.RemoteAddr().String()+":"+"Tx:%X \n", revData)
 					time.Sleep(500 * time.Millisecond)
 				}
 			}
