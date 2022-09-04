@@ -16,6 +16,7 @@ import (
 
 var ipPort string
 
+//https://www.jb51.net/article/80770.htm
 //公有函数首字母得大写，私有函数首字母得小写
 //端口值
 var serialPortVal string
