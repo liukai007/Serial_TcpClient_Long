@@ -269,10 +269,6 @@ func SerialBase(serialPort string, baudVal int, parityVal serial.Parity, dataBit
 
 	//保持数据持续接收
 	for {
-		//if errTcp != nil {
-		//	serialConn.Close()
-		//	return errTcp
-		//}
 		buf := make([]byte, 1024)
 		lens, err := serialConn.Read(buf)
 		time.Sleep(time.Duration(noMillisecondsV) * time.Millisecond)
