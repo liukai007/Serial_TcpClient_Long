@@ -15,6 +15,7 @@ import (
 )
 
 var ipPort string
+
 //公有函数首字母得大写，私有函数首字母得小写
 //端口值
 var serialPortVal string
@@ -217,7 +218,7 @@ func SerialBase(serialPort string, baudVal int, parityVal serial.Parity, dataBit
 
 	//打开串口
 	var errTcp error
-	conn, err := serial.OpenPort(ser)
+	serialConn, err := serial.OpenPort(ser)
 	for err != nil {
 		log.Fatal(err)
 		fmt.Println("串口被占用，沉睡5秒中")
@@ -228,7 +229,7 @@ func SerialBase(serialPort string, baudVal int, parityVal serial.Parity, dataBit
 		} else {
 			fmt.Println("Windows system")
 		}
-		conn, err = serial.OpenPort(ser)
+		serialConn, err = serial.OpenPort(ser)
 	}
 
 	//启动一个协程循环发送
@@ -249,14 +250,14 @@ func SerialBase(serialPort string, baudVal int, parityVal serial.Parity, dataBit
 					if errTcp != nil {
 						tcpConn.Close()
 						delete(tcpConnMap, tcpConn)
-						//conn.Close()
+						//serialConn.Close()
 						continue
 					}
 					revData := buf[:n]
-					_, err := conn.Write(revData)
+					_, err := serialConn.Write(revData)
 					if err != nil {
 						log.Println(err)
-						conn, err = serial.OpenPort(ser)
+						serialConn, err = serial.OpenPort(ser)
 						continue
 					}
 					log.Printf("Tx:%X \n", revData)
@@ -269,15 +270,15 @@ func SerialBase(serialPort string, baudVal int, parityVal serial.Parity, dataBit
 	//保持数据持续接收
 	for {
 		//if errTcp != nil {
-		//	conn.Close()
+		//	serialConn.Close()
 		//	return errTcp
 		//}
 		buf := make([]byte, 1024)
-		lens, err := conn.Read(buf)
+		lens, err := serialConn.Read(buf)
 		time.Sleep(time.Duration(noMillisecondsV) * time.Millisecond)
 		if err != nil {
 			log.Println(err)
-			conn, err = serial.OpenPort(ser)
+			serialConn, err = serial.OpenPort(ser)
 			continue
 		}
 		revData := buf[:lens]
@@ -287,7 +288,7 @@ func SerialBase(serialPort string, baudVal int, parityVal serial.Parity, dataBit
 				for tcpConn, _ := range tcpConnMap {
 					_, errTcp = tcpConn.Write(revData)
 					if errTcp != nil {
-						//conn.Close()
+						//serialConn.Close()
 						tcpConn.Close()
 						delete(tcpConnMap, tcpConn)
 						//return errTcp
@@ -297,4 +298,3 @@ func SerialBase(serialPort string, baudVal int, parityVal serial.Parity, dataBit
 		}
 	}
 }
-
