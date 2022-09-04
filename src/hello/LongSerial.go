@@ -10,16 +10,20 @@ import (
 	"os/exec"
 	"runtime"
 	"strconv"
+	"strings"
 	"time"
 )
 
 var ipPort string
-
+//公有函数首字母得大写，私有函数首字母得小写
 //端口值
 var serialPortVal string
 
 //比特率
 var baudVal string
+
+//数据位
+var dataBits string
 
 //停止位
 var stopBitsVal string
@@ -45,6 +49,7 @@ func init() {
 		flag.StringVar(&ipPort, "ipPort", ":19998", "ipPort")
 		flag.StringVar(&baudVal, "baudVal", "9600", "baudVal")
 		flag.StringVar(&parityVal, "parityVal", "N", "parity")
+		flag.StringVar(&dataBits, "dataBits", "8", "dataBits")
 		flag.StringVar(&stopBitsVal, "stopBitsVal", "1", "StopBits")
 		flag.StringVar(&noMilliseconds, "noMilliseconds", "3000", "noMilliseconds")
 	} else if n == 2 {
@@ -53,6 +58,7 @@ func init() {
 		flag.StringVar(&ipPort, "ipPort", ":19998", "ipPort")
 		flag.StringVar(&baudVal, "baudVal", "9600", "baudVal")
 		flag.StringVar(&parityVal, "parityVal", "N", "parity")
+		flag.StringVar(&dataBits, "dataBits", "8", "dataBits")
 		flag.StringVar(&stopBitsVal, "stopBitsVal", "1", "StopBits")
 		flag.StringVar(&noMilliseconds, "noMilliseconds", "3000", "noMilliseconds")
 	} else if n == 3 {
@@ -61,6 +67,7 @@ func init() {
 		flag.StringVar(&ipPort, "ipPort", os.Args[2], "ipPort")
 		flag.StringVar(&baudVal, "baudVal", "9600", "baudVal")
 		flag.StringVar(&parityVal, "parityVal", "N", "parity")
+		flag.StringVar(&dataBits, "dataBits", "8", "dataBits")
 		flag.StringVar(&stopBitsVal, "stopBitsVal", "1", "StopBits")
 		flag.StringVar(&noMilliseconds, "noMilliseconds", "3000", "noMilliseconds")
 	} else if n == 4 {
@@ -69,6 +76,7 @@ func init() {
 		flag.StringVar(&ipPort, "ipPort", os.Args[2], "ipPort")
 		flag.StringVar(&baudVal, "baudVal", os.Args[3], "baudVal")
 		flag.StringVar(&parityVal, "parityVal", "N", "parity")
+		flag.StringVar(&dataBits, "dataBits", "8", "dataBits")
 		flag.StringVar(&stopBitsVal, "stopBitsVal", "1", "StopBits")
 		flag.StringVar(&noMilliseconds, "noMilliseconds", "3000", "noMilliseconds")
 	} else if n == 5 {
@@ -77,6 +85,7 @@ func init() {
 		flag.StringVar(&ipPort, "ipPort", os.Args[2], "ipPort")
 		flag.StringVar(&baudVal, "baudVal", os.Args[3], "baudVal")
 		flag.StringVar(&parityVal, "parityVal", os.Args[4], "parity")
+		flag.StringVar(&dataBits, "dataBits", "8", "dataBits")
 		flag.StringVar(&stopBitsVal, "stopBitsVal", "1", "StopBits")
 		flag.StringVar(&noMilliseconds, "noMilliseconds", "3000", "noMilliseconds")
 	} else if n == 6 {
@@ -85,28 +94,41 @@ func init() {
 		flag.StringVar(&ipPort, "ipPort", os.Args[2], "ipPort")
 		flag.StringVar(&baudVal, "baudVal", os.Args[3], "baudVal")
 		flag.StringVar(&parityVal, "parityVal", os.Args[4], "parity")
-		flag.StringVar(&stopBitsVal, "stopBitsVal", os.Args[5], "StopBits")
+		flag.StringVar(&dataBits, "dataBits", os.Args[5], "dataBits")
+		flag.StringVar(&stopBitsVal, "stopBitsVal", "1", "StopBits")
 		flag.StringVar(&noMilliseconds, "noMilliseconds", "3000", "noMilliseconds")
-	} else if n >= 7 {
+	} else if n == 7 {
 		println("enter 7")
 		flag.StringVar(&serialPortVal, "serialPortVal", os.Args[1], "serialPortVal")
 		flag.StringVar(&ipPort, "ipPort", os.Args[2], "ipPort")
 		flag.StringVar(&baudVal, "baudVal", os.Args[3], "baudVal")
 		flag.StringVar(&parityVal, "parityVal", os.Args[4], "parity")
-		flag.StringVar(&stopBitsVal, "stopBitsVal", os.Args[5], "StopBits")
-		flag.StringVar(&noMilliseconds, "noMilliseconds", os.Args[6], "noMilliseconds")
+		flag.StringVar(&dataBits, "dataBits", os.Args[5], "dataBits")
+		flag.StringVar(&stopBitsVal, "stopBitsVal", os.Args[6], "StopBits")
+		flag.StringVar(&noMilliseconds, "noMilliseconds", "3000", "noMilliseconds")
+	} else if n >= 8 {
+		println("enter 8")
+		flag.StringVar(&serialPortVal, "serialPortVal", os.Args[1], "serialPortVal")
+		flag.StringVar(&ipPort, "ipPort", os.Args[2], "ipPort")
+		flag.StringVar(&baudVal, "baudVal", os.Args[3], "baudVal")
+		flag.StringVar(&parityVal, "parityVal", os.Args[4], "parity")
+		flag.StringVar(&dataBits, "dataBits", os.Args[5], "dataBits")
+		flag.StringVar(&stopBitsVal, "stopBitsVal", os.Args[6], "StopBits")
+		flag.StringVar(&noMilliseconds, "noMilliseconds", os.Args[7], "noMilliseconds")
 	}
 }
 
 func main() {
-	//println(serialPortVal)
-	//println(ipPort)
-	//println(baudVal)
-	//println(parityVal)
-	//println(stopBitsVal)
-	//println(noMilliseconds)
+	println(serialPortVal)
+	println(ipPort)
+	println(baudVal)
+	println(parityVal)
+	println(stopBitsVal)
+	println(noMilliseconds)
 	baudInt, _ := strconv.Atoi(baudVal)
+	//校验码
 	parityBit := serial.ParityNone
+	parityVal = strings.ToLower(parityVal)
 	if parityVal == "odd" || parityVal == "o" {
 		parityBit = serial.ParityOdd
 	} else if parityVal == "even" || parityVal == "e" {
@@ -116,6 +138,17 @@ func main() {
 	} else if parityVal == "space" || parityVal == "s" {
 		parityBit = serial.ParitySpace
 	}
+	//数据位 //字符串转成数字
+	var dataBits1 uint8
+	dataBits1 = 8
+	if dataBits == "7" {
+		dataBits1 = 7
+	} else if dataBits == "5" {
+		dataBits1 = 5
+	} else if dataBits == "6" {
+		dataBits1 = 6
+	}
+	//停止位
 	stopBit := serial.Stop1
 	if stopBitsVal == "2" {
 		stopBit = serial.Stop2
@@ -137,7 +170,7 @@ func main() {
 	tcpConnMap = map[net.Conn]struct{}{}
 	numMilli, _ := strconv.Atoi(noMilliseconds)
 
-	go SerialBase(serialPortVal, baudInt, parityBit, stopBit, numMilli)
+	go SerialBase(serialPortVal, baudInt, parityBit, dataBits1, stopBit, numMilli)
 
 	var tcpConn net.Conn
 	go func() {
@@ -163,7 +196,7 @@ func main() {
 
 }
 
-func SerialBase(serialPort string, baudVal int, parityVal serial.Parity, stopBitsVal serial.StopBits, noMillisecondsV int) error {
+func SerialBase(serialPort string, baudVal int, parityVal serial.Parity, dataBits1 uint8, stopBitsVal serial.StopBits, noMillisecondsV int) error {
 	defer func() {
 		// recover内置函数，可以捕获到异常
 		err := recover()
@@ -176,6 +209,7 @@ func SerialBase(serialPort string, baudVal int, parityVal serial.Parity, stopBit
 	ser := &serial.Config{
 		Name:        serialPort,
 		Baud:        baudVal,
+		Size:        dataBits1,
 		Parity:      parityVal,
 		StopBits:    stopBitsVal,
 		ReadTimeout: 3 * time.Second,
@@ -218,18 +252,17 @@ func SerialBase(serialPort string, baudVal int, parityVal serial.Parity, stopBit
 						//conn.Close()
 						continue
 					}
+					revData := buf[:n]
+					_, err := conn.Write(revData)
+					if err != nil {
+						log.Println(err)
+						conn, err = serial.OpenPort(ser)
+						continue
+					}
+					log.Printf("Tx:%X \n", revData)
+					time.Sleep(500 * time.Millisecond)
 				}
 			}
-
-			revData := buf[:n]
-			_, err := conn.Write(revData)
-			if err != nil {
-				log.Println(err)
-				conn, err = serial.OpenPort(ser)
-				continue
-			}
-			log.Printf("Tx:%X \n", revData)
-			time.Sleep(time.Second)
 		}
 	}()
 
@@ -264,3 +297,4 @@ func SerialBase(serialPort string, baudVal int, parityVal serial.Parity, stopBit
 		}
 	}
 }
+
