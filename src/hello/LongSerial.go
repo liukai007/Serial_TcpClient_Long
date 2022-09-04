@@ -183,11 +183,6 @@ func main() {
 			} else {
 				tcpConnMap[tcpConn] = struct{}{}
 			}
-
-			//err = SerialBase(tcpConn, serialPortVal, baudInt, parityBit, stopBit, numMilli)
-			//if err != nil {
-			//	continue
-			//}
 		}
 	}()
 
