@@ -219,6 +219,7 @@ func SerialBase(serialPort string, baudVal int, parityVal serial.Parity, dataBit
 	var errTcp error
 	serialConn, err := serial.OpenPort(ser)
 	for err != nil {
+		//log.Fatal(err)
 		log.Println(err)
 		fmt.Println("串口被占用(或者不存在)，沉睡10秒中")
 		time.Sleep(10 * time.Second)
