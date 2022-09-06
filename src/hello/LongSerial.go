@@ -39,6 +39,9 @@ var noMilliseconds string
 //全局变量
 var tcpConnMap map[net.Conn]struct{}
 
+//全局是否已经传入
+var tcpConnBooleanMap map[net.Conn]bool
+
 func init() {
 	var n int
 	n = len(os.Args)
@@ -171,7 +174,7 @@ func main() {
 	}
 	tcpConnMap = map[net.Conn]struct{}{}
 	numMilli, _ := strconv.Atoi(noMilliseconds)
-
+	tcpConnBooleanMap = make(map[net.Conn]bool)
 	go SerialBase(serialPortVal, baudInt, parityBit, dataBits1, stopBit, numMilli)
 
 	var tcpConn net.Conn
@@ -238,26 +241,32 @@ func SerialBase(serialPort string, baudVal int, parityVal serial.Parity, dataBit
 			}
 		}()
 		for {
-			var n int
-			buf := make([]byte, 1024)
+			//var n int
+			//buf := make([]byte, 1024)
 			if tcpConnMap != nil {
 				for tcpConn, _ := range tcpConnMap {
-					n, errTcp = tcpConn.Read(buf)
-					if errTcp != nil {
-						tcpConn.Close()
-						delete(tcpConnMap, tcpConn)
-						//serialConn.Close()
-						continue
+					if !tcpConnBooleanMap[tcpConn] {
+						tcpConnBooleanMap[tcpConn] = true
+						go sendData(tcpConn, *serialConn)
 					}
-					revData := buf[:n]
-					_, err := serialConn.Write(revData)
-					if err != nil {
-						log.Println(err)
-						serialConn, err = serial.OpenPort(ser)
-						continue
-					}
-					log.Printf("远程IP和端口:"+tcpConn.RemoteAddr().String()+":"+"Tx:%X \n", revData)
-					time.Sleep(500 * time.Millisecond)
+					time.Sleep(1 * time.Second)
+
+					//n, errTcp = tcpConn.Read(buf)
+					//if errTcp != nil {
+					//	tcpConn.Close()
+					//	delete(tcpConnMap, tcpConn)
+					//	//serialConn.Close()
+					//	continue
+					//}
+					//revData := buf[:n]
+					//_, err := serialConn.Write(revData)
+					//if err != nil {
+					//	log.Println(err)
+					//	serialConn, err = serial.OpenPort(ser)
+					//	continue
+					//}
+					//log.Printf("远程IP和端口:"+tcpConn.RemoteAddr().String()+":"+"Tx:%X \n", revData)
+					//time.Sleep(500 * time.Millisecond)
 				}
 			}
 		}
@@ -271,6 +280,7 @@ func SerialBase(serialPort string, baudVal int, parityVal serial.Parity, dataBit
 		if err != nil {
 			log.Println(err)
 			serialConn, err = serial.OpenPort(ser)
+			time.Sleep(1 * time.Second)
 			continue
 		}
 		revData := buf[:lens]
@@ -288,5 +298,28 @@ func SerialBase(serialPort string, baudVal int, parityVal serial.Parity, dataBit
 				}
 			}
 		}
+	}
+}
+
+func sendData(tcpConn1 net.Conn, serialConn1 serial.Port) {
+	buf := make([]byte, 1024)
+	for {
+		n, errTcp := tcpConn1.Read(buf)
+		if errTcp != nil {
+			tcpConn1.Close()
+			delete(tcpConnMap, tcpConn1)
+			//serialConn1.Close()
+			break
+		}
+		revData := buf[:n]
+		_, err := serialConn1.Write(revData)
+		if err != nil {
+			log.Println(err)
+			//serialConn1, err = serial.OpenPort(ser)
+			//continue
+			break
+		}
+		log.Printf("远程IP和端口:"+tcpConn1.RemoteAddr().String()+":"+"Tx:%X \n", revData)
+		time.Sleep(500 * time.Millisecond)
 	}
 }
