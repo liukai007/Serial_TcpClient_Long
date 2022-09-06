@@ -219,9 +219,9 @@ func SerialBase(serialPort string, baudVal int, parityVal serial.Parity, dataBit
 	var errTcp error
 	serialConn, err := serial.OpenPort(ser)
 	for err != nil {
-		log.Fatal(err)
-		fmt.Println("串口被占用，沉睡5秒中")
-		time.Sleep(5 * time.Second)
+		log.Println(err)
+		fmt.Println("串口被占用(或者不存在)，沉睡10秒中")
+		time.Sleep(10 * time.Second)
 		sysType := runtime.GOOS
 		if sysType == "linux" {
 			exec.Command("fuser -k " + serialPort)
@@ -229,6 +229,7 @@ func SerialBase(serialPort string, baudVal int, parityVal serial.Parity, dataBit
 			fmt.Println("Windows system")
 		}
 		serialConn, err = serial.OpenPort(ser)
+		time.Sleep(time.Second)
 	}
 
 	//启动一个协程循环发送
@@ -280,7 +281,18 @@ func SerialBase(serialPort string, baudVal int, parityVal serial.Parity, dataBit
 		if err != nil {
 			log.Println(err)
 			serialConn, err = serial.OpenPort(ser)
-			time.Sleep(1 * time.Second)
+			for err != nil {
+				fmt.Println("串口被占用(或者不存在)，沉睡10秒中")
+				time.Sleep(10 * time.Second)
+				sysType := runtime.GOOS
+				if sysType == "linux" {
+					exec.Command("fuser -k " + serialPort)
+				} else {
+					fmt.Println("Windows system")
+				}
+				serialConn, err = serial.OpenPort(ser)
+				time.Sleep(time.Second)
+			}
 			continue
 		}
 		revData := buf[:lens]
